@@ -16,8 +16,8 @@ EMBEDDING_DIM = 768  # gemini-embedding-2 output_dimensionality dimension
 
 def init_qdrant() -> int:
     """
-    Initializes Qdrant local in-memory DB and indexes recipes from recipes.csv
-    using Gemini gemini-embedding-2.
+    Initializes Qdrant local in-memory DB and indexes recipes.
+    Loads pre-computed embeddings from recipes_with_embeddings.json if available.
     """
     try:
         # Check if collection exists
@@ -32,7 +32,38 @@ def init_qdrant() -> int:
             vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
         )
         
-        # Load and index recipes
+        # 1. Try loading from pre-computed JSON file first (saves API calls & boots instantly)
+        json_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'recipes_with_embeddings.json')
+        if os.path.exists(json_file):
+            try:
+                import json
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    recipes_data = json.load(f)
+                    
+                points = []
+                for idx, r in enumerate(recipes_data):
+                    points.append(
+                        PointStruct(
+                            id=idx,
+                            vector=r["vector"],
+                            payload={
+                                "recipe_name": r["recipe_name"],
+                                "ingredients": r["ingredients"],
+                                "meal_type": r["meal_type"],
+                                "nutrition_score": r["nutrition_score"],
+                                "recipe_summary": r["recipe_summary"],
+                                "tags": r["tags"]
+                            }
+                        )
+                    )
+                if points:
+                    client.upsert(collection_name=COLLECTION_NAME, points=points)
+                    print(f"Successfully loaded {len(points)} recipe embeddings from JSON cache.")
+                    return len(points)
+            except Exception as je:
+                print(f"Warning: Failed to load pre-computed embeddings from JSON ({je}). Falling back to live embeddings.")
+
+        # 2. Fallback to indexing from recipes.csv (original live indexing loop)
         recipes_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'recipes.csv')
         if not os.path.exists(recipes_file):
             print(f"Error: Recipes database file not found at {recipes_file}")
@@ -83,7 +114,7 @@ def search_recipes_vector(query: str, limit: int = 20):
     Performs cosine similarity search using Gemini embeddings.
     Falls back to a keyword match if no key is set.
     """
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return fallback_keyword_search(query, limit)
         

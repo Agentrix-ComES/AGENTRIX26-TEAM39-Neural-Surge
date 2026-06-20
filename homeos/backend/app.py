@@ -2,7 +2,10 @@
 import sys
 import os
 from dotenv import load_dotenv
-load_dotenv()
+
+# Load environment variables
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(dotenv_path=dotenv_path)
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from tools.db import init_db
 from vector_db.qdrant import init_qdrant, client as q_client, COLLECTION_NAME
 from routes import plan
+from routes import receipts
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,7 +30,7 @@ async def lifespan(app: FastAPI):
     indexed_count = init_qdrant()
     
     # 3. Check Gemini connection and print status cleanly
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     gemini_connected = False
     if api_key:
         try:
@@ -80,13 +84,14 @@ app.add_middleware(
 
 # API routes
 app.include_router(plan.router, prefix="/api/plan", tags=["Plan"])
+app.include_router(receipts.router, prefix="/api/receipts", tags=["Receipts"])
 
 @app.get("/health/ai")
 def ai_health():
     """
     Diagnostics endpoint for Gemini, Qdrant, and embedding models connectivity.
     """
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return {"gemini": "failed"}
     try:

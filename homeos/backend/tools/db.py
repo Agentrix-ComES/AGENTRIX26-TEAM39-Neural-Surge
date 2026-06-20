@@ -52,6 +52,38 @@ def init_db():
         )
     """)
     
+    # Create receipts table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS receipts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            purchase_date TEXT NOT NULL,
+            store_name TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Create receipt_items table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS receipt_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            receipt_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            quantity TEXT NOT NULL,
+            unit TEXT NOT NULL,
+            price REAL NOT NULL,
+            FOREIGN KEY(receipt_id) REFERENCES receipts(id)
+        )
+    """)
+    
+    # Create monthly_expenses table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS monthly_expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            month_year TEXT NOT NULL UNIQUE,
+            total_expense REAL NOT NULL
+        )
+    """)
+    
     conn.commit()
     
     # Seed inventory
