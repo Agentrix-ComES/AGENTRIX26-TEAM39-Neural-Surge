@@ -1,228 +1,111 @@
 # 🏠 HomeOS – Autonomous Household Economic Intelligence Platform
 
-> AgenTriX 2026 | Team 39 – Neural Surge
+HomeOS is an agentic AI-powered household planning system designed to maximize pantry food utilization, reduce waste, improve nutritional balance, and minimize grocery spending. 
 
-HomeOS is an Agentic AI-powered household planning system designed to help families reduce food waste, optimize grocery spending, and generate budget-aware meal plans.
-
-Instead of acting as a passive tracker, HomeOS behaves like a household economic assistant that analyzes pantry inventory, identifies waste risks, generates meal plans, validates budget constraints, and explains its decisions through an agent-based workflow.
+Instead of simple static tracking, HomeOS functions as a smart multi-agent platform utilizing **LangGraph** to coordinate planning, budget validation, and self-correction loops.
 
 ---
 
-## 🎯 Problem Statement
+## 🤖 Agent Workflow Architecture
 
-Many households struggle with:
+The platform uses a stateful multi-agent system composed of 8 specialized agents coordinating over a shared state schema:
 
-* Food waste caused by forgotten perishables
-* Unnecessary grocery purchases
-* Poor meal planning
-* Lack of visibility into food spending
-* Manual decision-making across disconnected tools
-
-HomeOS addresses these issues through autonomous planning and optimization.
-
----
-
-## 🚀 Core Features
-
-* Pantry Analysis
-* Waste Detection
-* Meal Planning
-* Budget Optimization
-* Reflection-Based Validation
-* Self-Correction Loop
-* Explainable Agent Trace
-
----
-
-## 🤖 Agent Architecture
-
-The MVP is built using a LangGraph-inspired multi-agent workflow.
-
-### Agents
-
-1. Coordinator Agent
-2. Pantry Agent
-3. Waste Agent
-4. Meal Planning Agent
-5. Budget Agent
-6. Reflection Agent
-7. Reporting Agent
-
-### Workflow
-
-```text
-User Input
-    ↓
-Coordinator
-    ↓
-Pantry Analysis
-    ↓
-Waste Detection
-    ↓
-Meal Planning
-    ↓
-Budget Analysis
-    ↓
-Reflection Validation
-      │
- PASS │ FAIL
-      │
-      ▼
- Reporting
-
-FAIL
- ↓
-Meal Planning
- ↓
-Budget
- ↓
-Reflection
+```
+            User Parameters (Budget, Family Size, Inventory)
+                                   ↓
+                           Coordinator Agent
+                                   ↓
+                            Inventory Agent
+                                   ↓
+                              Waste Agent
+                                   ↓
+                         Recipe Retrieval Agent
+                                   ↓
+                         ┌→ Meal Planner Agent
+                         │         ↓
+                         │    Budget Agent
+                         │         ↓
+                         │  Reflection Agent 
+                         │         ├──────────────┐
+                         │   FAIL  │  (max 2x)    │ PASS
+                         └─────────┘              ▼
+                                            Reporting Agent
+                                                  ↓
+                                                 END
 ```
 
-The Reflection Agent evaluates generated plans and triggers a self-correction loop whenever constraints are violated.
+1. **Coordinator Agent:** Establishes the primary weekly meal planning objective and parses constraints.
+2. **Inventory Agent:** Matches stock list against the SQLite database to retrieve shelf-life metadata and tag expiring items.
+3. **Waste Agent:** Evaluates historical waste patterns to label high-risk items.
+4. **Recipe Retrieval Agent:** Executes cosine similarity RAG search on the local Qdrant collection to retrieve candidate recipes.
+5. **Meal Planner Agent:** Computes recipe scores (40% Inventory + 25% Waste + 20% Nutrition + 15% Cost) and generates a 7-day breakfast/lunch/dinner plan.
+6. **Budget Agent:** Resolves pricing for any missing ingredients from `prices.csv` and builds an aggregated shopping list.
+7. **Reflection Agent:** Critically audits the plan's budget limits and perishable timing, issuing a `PASS` or `FAIL`.
+8. **Reporting Agent:** Compiles execution metrics, formats trace steps, and exports the final plan report to `meal_plan.json`.
 
 ---
 
 ## 🛠 Tech Stack
 
-### Backend
-
-* Python
-* LangGraph
-* FastAPI
-
-### Frontend
-
-* React
-* HTML
-* CSS
-* JavaScript
-
-### Data Layer
-
-* CSV Files
-* SQLite (Optional for MVP)
-
-### AI Layer
-
-* OpenAI API
+* **Backend:** FastAPI, Python, LangGraph, OpenAI (GPT models), SQLite (Local Pantry), Qdrant (Local In-Memory Vector DB).
+* **Frontend:** React, TailwindCSS, Vite.
 
 ---
 
-## 📂 Project Structure
+## 🚀 Running Locally
 
-```text
-homeos
-├── backend
-│   ├── agents
-│   ├── graph
-│   ├── routes
-│   ├── tools
-│   ├── data
-│   └── prompts
-│
-└── frontend
-    ├── components
-    ├── pages
-    ├── src
-    └── dummy
-```
+Follow these instructions to start the backend and frontend services on your system.
 
----
+### Prerequisites
+* Python 3.12+ (dependencies are compatible up to Python 3.14)
+* Node.js (v18+)
 
-## 📋 Current Development Status
+### 1. Setup Backend Server
 
-### Phase 1 – Agent Workflow Foundation
+1. Open your terminal and navigate to the project directory:
+   ```bash
+   cd homeos/backend
+   ```
+2. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Copy the environment variables template and configure your API key:
+   ```bash
+   cp .env.example .env
+   # Open the .env file and set your OPENAI_API_KEY:
+   # OPENAI_API_KEY=sk-...
+   ```
+5. Start the FastAPI application:
+   ```bash
+   uvicorn app:app --reload
+   ```
+   The backend API will start running at `http://localhost:8000`. On startup, it will automatically initialize the local SQLite database and index recipes into the local Qdrant vector database.
 
-Completed:
+### 2. Setup React Frontend Client
 
-* Project structure setup
-* Agent architecture design
-* Workflow planning
-* Frontend prototype (dummy)
-* Shared state design
+1. Open a new terminal and navigate to the frontend directory:
+   ```bash
+   cd homeos/frontend
+   ```
+2. Install npm packages:
+   ```bash
+   npm install
+   ```
+3. Run the Vite dev server:
+   ```bash
+   npm run dev
+   ```
+   The application will start running at `http://localhost:5173`.
 
-In Progress:
-
-* LangGraph workflow implementation
-* Agent integration
-* API endpoints
-
-Upcoming:
-
-* Tool integration
-* Reflection loop
-* Self-correction mechanism
-* Budget optimization
-* End-to-end demonstration
-
----
-
-## 🖥 Frontend Prototype
-
-The frontend prototype located in:
-
-```text
-homeos/frontend/dummy/
-```
-
-demonstrates:
-
-* Household input form
-* Agent execution visualization
-* Reflection workflow simulation
-* Budget dashboard
-* Meal planning report
-* Explainable agent trace
-
-This prototype is intended for rapid hackathon validation before backend integration.
-
----
-
-## 🎯 MVP Objectives
-
-The MVP focuses on demonstrating:
-
-### Multi-Agent Collaboration
-
-Agents work together to solve a household planning problem.
-
-### Planning Pattern
-
-The system decomposes user goals into executable tasks.
-
-### Tool Use Pattern
-
-Agents call deterministic tools for calculations and analysis.
-
-### Reflection Pattern
-
-Generated outputs are validated against constraints.
-
-### Self-Correction Loop
-
-Failures automatically trigger re-planning.
-
-### Explainable AI
-
-Users can inspect the reasoning trace behind every decision.
-
----
-
-## 👥 Team
-
-### Team 39 – Neural Surge
-
-AgenTriX 2026
-
-* Workflow & Architecture
-* Backend Development
-* Frontend Development
-* Agent Engineering
-* AI Integration
-
----
-
-## 🏆 AgenTriX 2026 Vision
-
-HomeOS aims to demonstrate how Agentic AI can move beyond simple chat interactions and act as an autonomous household economic intelligence system capable of planning, validating, optimizing, and explaining its decisions.
+### 3. Generate Plans & Inspect Trace
+* Open your browser and navigate to `http://localhost:5173`.
+* Enter your household budget, family size, and pantry inventory (e.g. `Rice, Carrots, Eggs, Soy Sauce`).
+* Click **Generate Economic Plan** to trigger the LangGraph orchestration.
+* Check the **Weekly Meal Schedule** and click any Day Card to view detailed meal ingredients, cost, and nutrition.
+* Go to the **Agent Trace** page in the sidebar to inspect the inputs, decisions, and output payloads for each of the 8 agents in the pipeline.
