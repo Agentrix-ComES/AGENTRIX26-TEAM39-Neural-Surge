@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Route, RefreshCw, Cpu } from 'lucide-react';
+import { LayoutDashboard, Route, RefreshCw, Cpu, FileText } from 'lucide-react';
 
 export default function Sidebar() {
   const location = useLocation();
 
   const menuItems = [
     { path: '/', name: 'Dashboard', icon: LayoutDashboard },
+    { path: '/receipts', name: 'Receipts', icon: FileText },
     { path: '/trace', name: 'Agent Trace', icon: Route },
   ];
 

@@ -49,20 +49,48 @@ export async function completeMeal(day, mealType) {
       meal_type: mealType,
     }),
   });
-  
+
   if (!response.ok) {
     const err = await response.json();
     throw new Error(err.detail || 'Failed to complete meal.');
   }
-  
+
+  return response.json();
+}
+
+export async function addReceipt(data) {
+  const response = await fetch('/api/receipts/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.detail?.message || 'Failed to add receipt.');
+  }
+
+  return response.json();
+}
+
+export async function getPantry() {
+  const response = await fetch('/api/receipts/pantry');
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch pantry.');
+  }
+
   return response.json();
 }
 
 export async function getInventory() {
   const response = await fetch('/api/inventory');
+
   if (!response.ok) {
     throw new Error('Failed to fetch inventory.');
   }
+
   return response.json();
 }
-

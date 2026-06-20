@@ -10,12 +10,13 @@ from llm import GeminiClient, get_embedding, generate_text
 from vector_db.qdrant import init_qdrant, search_recipes_vector
 
 def main():
-    load_dotenv()
+    dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    load_dotenv(dotenv_path=dotenv_path)
     
     # 1. Check Gemini Connectivity
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        print("FAIL: GEMINI_API_KEY env variable not set.")
+        print("FAIL: GEMINI_API_KEY or GOOGLE_API_KEY env variable not set.")
         sys.exit(1)
         
     try:

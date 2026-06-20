@@ -2,12 +2,17 @@
 import os
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
+
+# Load environment variables
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(dotenv_path=dotenv_path)
 
 class GeminiClient:
     def __init__(self):
         # Initialize the official SDK client.
         # Fall back to a dummy key if none is set to allow startup/offline runs without ValueError
-        self.api_key = os.getenv("GEMINI_API_KEY") or "DUMMY_KEY_TO_ALLOW_STARTUP"
+        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "DUMMY_KEY_TO_ALLOW_STARTUP"
         self.client = genai.Client(api_key=self.api_key)
 
 # Global singleton or cache

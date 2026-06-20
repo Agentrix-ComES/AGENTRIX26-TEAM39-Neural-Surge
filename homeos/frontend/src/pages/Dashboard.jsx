@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, ShoppingCart, DollarSign, Scale, Trash2, Plus, Minus, Check } from 'lucide-react';
-import { generatePlan, getInventory } from '../services/api';
+import { generatePlan, getInventory, getPantry } from '../services/api';
 import MealCard from '../components/MealCard';
 
 export default function Dashboard({ onPlanGenerated, currentPlan }) {
@@ -11,6 +11,22 @@ export default function Dashboard({ onPlanGenerated, currentPlan }) {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');
   const [error, setError] = useState('');
+
+  const fetchPantry = async () => {
+    try {
+      const items = await getPantry();
+      if (items && items.length > 0) {
+        // Ensure unique items
+        setPantryList([...new Set(items)]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch pantry:', err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchPantry();
+  }, []);
 
   const addPantryItem = () => {
     const val = pantryInput.trim();
@@ -149,23 +165,7 @@ export default function Dashboard({ onPlanGenerated, currentPlan }) {
           </h3>
           <div className="flex flex-col gap-4">
             <div>
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Add Item</label>
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={pantryInput}
-                  onChange={(e) => setPantryInput(e.target.value)}
-                  placeholder="e.g. Rice, Carrots, Eggs..."
-                  onKeyDown={(e) => e.key === 'Enter' && addPantryItem()}
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white font-medium focus:border-indigo-500 focus:outline-none transition-colors"
-                />
-                <button 
-                  onClick={addPantryItem}
-                  className="bg-indigo-600 hover:bg-indigo-500 transition-colors text-white font-semibold px-5 rounded-xl flex items-center justify-center"
-                >
-                  Add
-                </button>
-              </div>
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Available Items from Database</div>
             </div>
             
             {/* Chips Container */}
@@ -173,18 +173,14 @@ export default function Dashboard({ onPlanGenerated, currentPlan }) {
               {pantryList.map((item, idx) => (
                 <span key={idx} className="bg-slate-900 border border-slate-800 text-slate-300 font-medium px-3 py-1.5 rounded-full text-xs flex items-center gap-2 hover:border-rose-500/30 transition-colors">
                   {item}
-                  <button 
-                    onClick={() => removePantryItem(idx)}
-                    className="text-slate-500 hover:text-rose-400 text-sm font-bold"
-                  >
-                    ×
-                  </button>
                 </span>
               ))}
             </div>
           </div>
         </div>
       </div>
+      
+
 
       {/* Button Row */}
       <div className="flex flex-col items-center gap-3 mb-12">
