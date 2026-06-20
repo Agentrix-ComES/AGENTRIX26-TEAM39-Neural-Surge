@@ -81,6 +81,11 @@ app.add_middleware(
 # API routes
 app.include_router(plan.router, prefix="/api/plan", tags=["Plan"])
 
+@app.get("/api/inventory")
+def get_inventory_direct():
+    from routes.plan import get_inventory_api
+    return get_inventory_api()
+
 @app.get("/health/ai")
 def ai_health():
     """

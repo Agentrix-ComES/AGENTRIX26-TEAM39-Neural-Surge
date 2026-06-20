@@ -6,19 +6,12 @@ from graph.state import AgentState
 # Add parent path to allow relative imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tools.pricing_tool import save_meal_plan
-from llm import generate_text
 
 def reporting_agent(state: AgentState):
     """
     Reporting Agent consolidates the final state into a client-ready report and saves the plan.
+    (No LLM, Pure Python Node)
     """
-    prompt_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    prompt_path = os.path.join(prompt_dir, 'prompts', 'reporting.txt')
-    system_prompt = "You are the Reporting Agent for HomeOS."
-    if os.path.exists(prompt_path):
-        with open(prompt_path, 'r', encoding='utf-8') as f:
-            system_prompt = f.read()
-
     budget = state.get("budget", 10000.0)
     estimated_cost = state.get("estimated_cost", 0.0)
     shopping_list = state.get("shopping_list", [])
@@ -30,9 +23,10 @@ def reporting_agent(state: AgentState):
     # Assess protected/waste-prevented items
     waste_prevented = list(set(urgent_foods + [w["item"] for w in state.get("waste_risk", []) if w["level"] in ["high", "medium"]]))
 
-    # Call Gemini Flash to generate a professional reasoning summary
-    user_content = f"Final Report Details: Cost LKR {estimated_cost} vs Budget LKR {budget}. Protected items: {waste_prevented}. Shopping list: {shopping_list}"
-    summary = generate_text(system_prompt, user_content, temperature=0.2)
+    # Retrieve the reasoning summary generated natively by the Meal Planner Agent
+    summary = state.get("reasoning_summary", "")
+    if not summary:
+        summary = "Optimized meal plan compiled successfully utilizing available perishables and staying under budget limits."
 
     # Calculate overall nutrition score average across the plan
     plan_days = state.get("weekly_plan", {})
@@ -42,7 +36,7 @@ def reporting_agent(state: AgentState):
             scores.append(meal.get("nutrition_score", 80))
     avg_nut = int(sum(scores) / len(scores)) if scores else 80
 
-    # Format the final report structure
+    # Format the final report structure matching the API contracts
     report = {
         "daily_plan": plan_days,  # Keep for backwards compatibility with frontend
         "weekly_plan": plan_days,  # Schema requirement
@@ -52,7 +46,8 @@ def reporting_agent(state: AgentState):
             "inventory_utilization_score": "100%" if len(urgent_foods) > 0 else "80%",
             "nutrition_score": f"{avg_nut}/100",
             "estimated_cost": f"LKR {int(estimated_cost)}",
-            "estimated_savings": f"LKR {int(savings)}"
+            "estimated_savings": f"LKR {int(savings)}",
+            "family_size": state.get("family_size", 4)
         },
         "agent_reasoning": {
             "urgent_foods_used": urgent_foods,
@@ -66,11 +61,11 @@ def reporting_agent(state: AgentState):
     # Save the meal plan using the pricing tool helper
     save_meal_plan(report)
 
-    # Append trace entry for reporting agent itself
+    # Append trace entry for reporting agent itself for explainability
     trace_entry = {
         "agent": "Reporting Agent",
         "input": "Final consolidated state data",
-        "decision": "Report generated, written to disk, and served to output endpoints.",
+        "decision": "Report generated, written to disk, and served to output endpoints. (Pure Python execution)",
         "output": f"Savings: LKR {int(savings)} | Protected Items: {len(waste_prevented)}"
     }
     
@@ -84,4 +79,3 @@ def reporting_agent(state: AgentState):
         "reasoning_summary": summary,
         "agent_trace": [trace_entry]
     }
-

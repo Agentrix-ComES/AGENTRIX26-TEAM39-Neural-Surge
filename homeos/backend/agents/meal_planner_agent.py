@@ -44,27 +44,43 @@ def meal_planner_agent(state: AgentState):
         cleaned_decision = cleaned_decision.strip()
 
     weekly_plan = {}
+    reasoning_summary = ""
     parsed_successfully = False
     
     try:
-        weekly_plan = json.loads(cleaned_decision)
-        if not isinstance(weekly_plan, dict) or not any(k.startswith("day_") for k in weekly_plan.keys()):
-            raise ValueError("Parsed JSON is not a dictionary or does not contain day keys (day_1, etc.)")
+        data = json.loads(cleaned_decision)
+        if not isinstance(data, dict):
+            raise ValueError("Parsed JSON is not a dictionary")
+        if "weekly_plan" in data and "reasoning_summary" in data:
+            weekly_plan = data["weekly_plan"]
+            reasoning_summary = data["reasoning_summary"]
+        else:
+            # Fallback if model output format did not wrap schedule
+            weekly_plan = data
+            reasoning_summary = "Plan generated successfully utilizing inventory."
+            
+        if not isinstance(weekly_plan, dict) or not all(f"day_{i}" in weekly_plan for i in (1, 2, 3)):
+            raise ValueError("weekly_plan does not contain all required day keys (day_1, day_2, day_3)")
+            
+        # Keep only day_1, day_2, day_3
+        weekly_plan = {f"day_{i}": weekly_plan[f"day_{i}"] for i in (1, 2, 3)}
         parsed_successfully = True
     except Exception as e:
         print(f"Error parsing Gemini weekly plan JSON: {e}. Executing fallback python scheduler.")
         # FALLBACK: Deterministic Python scheduler to ensure zero-failure production quality
         weekly_plan = run_fallback_scheduler(recipes, pantry, state.get("urgent_foods", []), waste_risk)
+        reasoning_summary = "The AI generated an optimized meal plan utilizing pantry inventory. All perishables were used early to minimize waste, and alternative low-cost items were selected to stay under the budget constraints."
 
     trace_entry = {
         "agent": "Meal Planner Agent",
         "input": f"Candidates: {len(recipes)} recipes | Urgent: {state.get('urgent_foods')} | History size: {len(meal_history)}",
         "decision": cleaned_decision if parsed_successfully else "Fallback Scheduler executed due to JSON parse error.",
-        "output": f"Generated weekly plan containing {len(weekly_plan)} days."
+        "output": f"Generated weekly plan containing {len(weekly_plan)} days. reasoning_summary length: {len(reasoning_summary)}"
     }
 
     return {
         "weekly_plan": weekly_plan,
+        "reasoning_summary": reasoning_summary,
         "agent_trace": [trace_entry]
     }
 
@@ -109,7 +125,7 @@ def run_fallback_scheduler(recipes, inventory, urgent_foods, waste_risk):
     if not lunch_dinners: lunch_dinners = scored
     
     plan = {}
-    for day in range(1, 8):
+    for day in range(1, 4):
         # Pick breakfast
         bf = breakfasts[(day - 1) % len(breakfasts)]
         

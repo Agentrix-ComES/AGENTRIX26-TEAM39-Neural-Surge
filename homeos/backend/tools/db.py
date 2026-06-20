@@ -15,19 +15,36 @@ def get_db_connection():
 
 def init_db():
     """
-    Initializes the SQLite tables for inventory, waste history, and meal history and seeds them if empty.
+    Initializes the SQLite tables for Inventory, MealExecution, waste history, and meal history and seeds them if empty.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Create inventory table
+    # Drop old inventory table if it exists to prevent conflict and migration issues
+    cursor.execute("DROP TABLE IF EXISTS inventory")
+    cursor.execute("DROP TABLE IF EXISTS Inventory")
+    
+    # Create new Inventory table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS inventory (
+        CREATE TABLE IF NOT EXISTS Inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            quantity TEXT NOT NULL,
+            ingredient TEXT NOT NULL UNIQUE,
+            quantity REAL NOT NULL,
+            original_quantity REAL NOT NULL,
             unit TEXT NOT NULL,
-            expiry_date TEXT NOT NULL
+            expiry_date TEXT
+        )
+    """)
+    
+    # Create MealExecution table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS MealExecution (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            day INTEGER NOT NULL,
+            meal_type TEXT NOT NULL,
+            recipe_name TEXT NOT NULL,
+            completed_at TEXT NOT NULL,
+            UNIQUE(day, meal_type)
         )
     """)
     
@@ -54,18 +71,24 @@ def init_db():
     
     conn.commit()
     
-    # Seed inventory
-    cursor.execute("SELECT COUNT(*) FROM inventory")
+    # Seed Inventory (all in lowercase to facilitate match, capitalizing in response if needed)
+    cursor.execute("SELECT COUNT(*) FROM Inventory")
     if cursor.fetchone()[0] == 0:
         seed_inventory = [
-            ("Rice", "2", "kg", "2026-07-20"),
-            ("Carrots", "500", "g", "2026-06-23"),
-            ("Eggs", "6", "pcs", "2026-06-30"),
-            ("Soy Sauce", "150", "ml", "2026-12-20")
+            ("rice", 5000.0, 5000.0, "g", "2026-07-20"),
+            ("carrots", 1000.0, 1000.0, "g", "2026-06-23"),
+            ("eggs", 24.0, 24.0, "pcs", "2026-06-30"),
+            ("soy sauce", 500.0, 500.0, "ml", "2026-12-20"),
+            ("cooking oil", 1000.0, 1000.0, "ml", "2026-12-20"),
+            ("onions", 500.0, 500.0, "g", "2026-07-10"),
+            ("garlic", 100.0, 100.0, "g", "2026-07-10"),
+            ("chicken", 2000.0, 2000.0, "g", "2026-06-25"),
+            ("tomatoes", 500.0, 500.0, "g", "2026-06-25"),
+            ("beans", 500.0, 500.0, "g", "2026-06-28")
         ]
         cursor.executemany("""
-            INSERT OR IGNORE INTO inventory (name, quantity, unit, expiry_date)
-            VALUES (?, ?, ?, ?)
+            INSERT OR IGNORE INTO Inventory (ingredient, quantity, original_quantity, unit, expiry_date)
+            VALUES (?, ?, ?, ?, ?)
         """, seed_inventory)
         conn.commit()
         
@@ -103,4 +126,4 @@ def init_db():
         conn.commit()
         
     conn.close()
-    print("Local SQLite database initialized and seeded with MealHistory.")
+    print("Local SQLite database initialized and seeded with Inventory.")

@@ -37,3 +37,32 @@ export async function getDayDetail(id) {
   }
   return response.json();
 }
+
+export async function completeMeal(day, mealType) {
+  const response = await fetch('/api/plan/complete-meal', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      day: parseInt(day, 10),
+      meal_type: mealType,
+    }),
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.detail || 'Failed to complete meal.');
+  }
+  
+  return response.json();
+}
+
+export async function getInventory() {
+  const response = await fetch('/api/inventory');
+  if (!response.ok) {
+    throw new Error('Failed to fetch inventory.');
+  }
+  return response.json();
+}
+
