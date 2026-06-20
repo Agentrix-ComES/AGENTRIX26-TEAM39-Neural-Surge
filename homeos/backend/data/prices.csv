@@ -1,11 +1,13 @@
-item,unit,price
-Chicken,500g,850
-Eggs,12 pcs,480
-Onions,3 pcs,180
-Beans,250g,220
-Tomatoes,4 pcs,200
-Garlic,1 bulb,80
-Cooking Oil,250ml,170
-Rice,1kg,400
-Carrots,250g,150
-Soy Sauce,150ml,250
+item,price,unit
+eggs,15.0,1 pcs
+rice,220.0,1 kg
+soy sauce,180.0,1 bottle
+onions,120.0,1 kg
+garlic,250.0,1 kg
+carrots,160.0,1 kg
+chicken,950.0,1 kg
+ginger,300.0,1 kg
+vegetable broth,250.0,1 pack
+butter,450.0,1 pack
+peas,180.0,1 pack
+cooking oil,350.0,1 bottle
