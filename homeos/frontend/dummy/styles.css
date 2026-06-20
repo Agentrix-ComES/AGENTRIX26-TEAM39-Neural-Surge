@@ -1013,4 +1013,3 @@ body::before {
   .shop-row, .shop-total { grid-template-columns: 2fr 1fr 1fr; }
   .shop-row > :nth-child(4), .shop-row.head > :nth-child(4), .shop-total > :nth-child(4) { display: none; }
 }
-
