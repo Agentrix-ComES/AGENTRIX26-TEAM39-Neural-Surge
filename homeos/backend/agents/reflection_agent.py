@@ -6,7 +6,7 @@ from graph.state import AgentState
 
 # Add parent path to allow imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from llm import call_gemini
+from llm import generate_text
 
 def reflection_agent(state: AgentState):
     """
@@ -33,7 +33,7 @@ def reflection_agent(state: AgentState):
     }, indent=2)
 
     # Call Gemini Flash with JSON mode enabled
-    decision = call_gemini(system_prompt, user_content, temperature=0.1, json_mode=True)
+    decision = generate_text(system_prompt, user_content, temperature=0.1, json_mode=True)
     
     # Strip markdown ticks if returned
     cleaned_decision = decision

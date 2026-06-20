@@ -6,7 +6,7 @@ from graph.state import AgentState
 # Add parent path to allow relative imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tools.pricing_tool import save_meal_plan
-from llm import call_gemini
+from llm import generate_text
 
 def reporting_agent(state: AgentState):
     """
@@ -32,7 +32,7 @@ def reporting_agent(state: AgentState):
 
     # Call Gemini Flash to generate a professional reasoning summary
     user_content = f"Final Report Details: Cost LKR {estimated_cost} vs Budget LKR {budget}. Protected items: {waste_prevented}. Shopping list: {shopping_list}"
-    summary = call_gemini(system_prompt, user_content, temperature=0.2)
+    summary = generate_text(system_prompt, user_content, temperature=0.2)
 
     # Calculate overall nutrition score average across the plan
     plan_days = state.get("weekly_plan", {})

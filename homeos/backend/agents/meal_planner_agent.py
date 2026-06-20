@@ -6,7 +6,7 @@ from graph.state import AgentState
 
 # Add parent path to allow imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from llm import call_gemini
+from llm import generate_text
 
 def meal_planner_agent(state: AgentState):
     """
@@ -33,7 +33,7 @@ def meal_planner_agent(state: AgentState):
     }, indent=2)
 
     # Call Gemini Flash central client with JSON mode
-    decision = call_gemini(system_prompt, user_content, temperature=0.2, json_mode=True)
+    decision = generate_text(system_prompt, user_content, temperature=0.2, json_mode=True)
     
     # Strip markdown block ticks if returned in spite of system instructions
     cleaned_decision = decision
@@ -48,6 +48,8 @@ def meal_planner_agent(state: AgentState):
     
     try:
         weekly_plan = json.loads(cleaned_decision)
+        if not isinstance(weekly_plan, dict) or not any(k.startswith("day_") for k in weekly_plan.keys()):
+            raise ValueError("Parsed JSON is not a dictionary or does not contain day keys (day_1, etc.)")
         parsed_successfully = True
     except Exception as e:
         print(f"Error parsing Gemini weekly plan JSON: {e}. Executing fallback python scheduler.")

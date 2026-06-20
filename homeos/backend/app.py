@@ -1,6 +1,8 @@
 # app.py
 import sys
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from tools.db import init_db
-from vector_db.qdrant import init_qdrant
+from vector_db.qdrant import init_qdrant, client as q_client, COLLECTION_NAME
 from routes import plan
 
 @asynccontextmanager
@@ -19,8 +21,46 @@ async def lifespan(app: FastAPI):
     """
     # 1. Initialize SQLite db
     init_db()
+    
     # 2. Initialize Qdrant local vector db
-    init_qdrant()
+    indexed_count = init_qdrant()
+    
+    # 3. Check Gemini connection and print status cleanly
+    api_key = os.getenv("GEMINI_API_KEY")
+    gemini_connected = False
+    if api_key:
+        try:
+            from google import genai
+            test_client = genai.Client(api_key=api_key)
+            test_client.models.embed_content(
+                model="gemini-embedding-2",
+                contents="startup_test",
+                config={"output_dimensionality": 768}
+            )
+            gemini_connected = True
+        except Exception:
+            pass
+            
+    if gemini_connected:
+        print("Gemini Connected")
+        print("Embedding Model: gemini-embedding-2")
+    else:
+        print("Gemini Connection Failed (using offline fallbacks)")
+        print("Embedding Model: None (Offline)")
+        
+    # Check Qdrant collection status
+    try:
+        collections = q_client.get_collections().collections
+        qdrant_connected = any(c.name == COLLECTION_NAME for c in collections)
+    except Exception:
+        qdrant_connected = False
+        
+    if qdrant_connected:
+        print("Qdrant Connected")
+        print(f"Recipes Indexed: {indexed_count}")
+    else:
+        print("Qdrant Connection Failed")
+        
     yield
 
 app = FastAPI(
@@ -40,6 +80,35 @@ app.add_middleware(
 
 # API routes
 app.include_router(plan.router, prefix="/api/plan", tags=["Plan"])
+
+@app.get("/health/ai")
+def ai_health():
+    """
+    Diagnostics endpoint for Gemini, Qdrant, and embedding models connectivity.
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"gemini": "failed"}
+    try:
+        from google import genai
+        test_client = genai.Client(api_key=api_key)
+        test_client.models.embed_content(
+            model="gemini-embedding-2",
+            contents="healthcheck",
+            config={"output_dimensionality": 768}
+        )
+        
+        collections = q_client.get_collections().collections
+        exists = any(c.name == COLLECTION_NAME for c in collections)
+        if exists:
+            return {
+                "gemini": "connected",
+                "embedding_model": "gemini-embedding-2",
+                "qdrant": "connected"
+            }
+    except Exception:
+        pass
+    return {"gemini": "failed"}
 
 @app.get("/health")
 @app.get("/")
