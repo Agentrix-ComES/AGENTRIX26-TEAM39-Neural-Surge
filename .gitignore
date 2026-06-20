@@ -1,0 +1,51 @@
+# Environment
+.venv/
+venv/
+env/
+*.egg-info/
+.Python
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / Packaging
+dist/
+build/
+*.egg
+
+# Logs / Debug
+*.log
+*.debug
+*.trace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Large Data / Secrets (CRITICAL)
+.env
+*.env
+secrets.py
+credentials.py
+keys/
+
+# Compiled Objects (if any)
+*.o
+*.dll
+*.exe
