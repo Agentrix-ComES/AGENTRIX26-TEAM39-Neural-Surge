@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Coffee, Sun, Moon, Sparkles, CheckCircle2, ShoppingBag } from 'lucide-react';
+import { completeMeal } from '../services/api';
 
-export default function MealDetailCard({ type, meal }) {
+export default function MealDetailCard({ type, meal, dayId, onComplete }) {
   const isBreakfast = type === 'breakfast';
   const isLunch = type === 'lunch';
+  const [isCompleting, setIsCompleting] = useState(false);
   
   const Icon = isBreakfast ? Coffee : (isLunch ? Sun : Moon);
   const colorClass = isBreakfast ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' 
@@ -11,6 +13,20 @@ export default function MealDetailCard({ type, meal }) {
                    : 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20');
 
   const consumedSet = new Set((meal.inventory_consumed || []).map(i => i.toLowerCase()));
+
+  const handleComplete = async () => {
+    setIsCompleting(true);
+    try {
+      await completeMeal(dayId, type);
+      if (onComplete) {
+        onComplete();
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to complete meal.');
+    } finally {
+      setIsCompleting(false);
+    }
+  };
 
   return (
     <div className="glass rounded-2xl p-6 flex flex-col justify-between border border-slate-800 hover:border-slate-700/80 transition-all duration-300 relative overflow-hidden h-full">
@@ -54,7 +70,7 @@ export default function MealDetailCard({ type, meal }) {
       </div>
 
       {/* Metrics Row */}
-      <div className="flex items-center justify-between border-t border-slate-850 pt-4 mt-auto">
+      <div className="flex items-center justify-between border-t border-slate-850 pt-4 mb-5">
         <div>
           <div className="text-[10px] text-slate-500 font-semibold uppercase">Est. Cost</div>
           <div className={`font-bold text-sm ${meal.cost_estimate > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
@@ -68,6 +84,32 @@ export default function MealDetailCard({ type, meal }) {
           </div>
           <div className="font-bold text-sm text-white">{meal.nutrition_score}/100</div>
         </div>
+      </div>
+
+      {/* Completion Status Badge & Button */}
+      <div className="border-t border-slate-800 pt-4 mt-auto flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-slate-500 font-semibold uppercase">Execution Status</span>
+          <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+            meal.status === 'Completed'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+          }`}>
+            {meal.status || 'Pending'}
+          </span>
+        </div>
+        
+        <button
+          onClick={handleComplete}
+          disabled={meal.status === 'Completed' || isCompleting}
+          className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs tracking-wider uppercase transition-all ${
+            meal.status === 'Completed'
+              ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-850'
+              : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/10'
+          }`}
+        >
+          {isCompleting ? 'Completing...' : meal.status === 'Completed' ? 'Meal Completed' : 'Complete Meal'}
+        </button>
       </div>
     </div>
   );

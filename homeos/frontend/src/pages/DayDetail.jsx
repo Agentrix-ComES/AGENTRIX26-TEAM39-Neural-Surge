@@ -9,10 +9,13 @@ export default function DayDetail() {
   const [dayData, setDayData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reloadCounter, setReloadCounter] = useState(0);
 
   useEffect(() => {
     async function loadDay() {
-      setLoading(true);
+      if (reloadCounter === 0) {
+        setLoading(true);
+      }
       setError('');
       try {
         const data = await getDayDetail(id);
@@ -24,7 +27,7 @@ export default function DayDetail() {
       }
     }
     loadDay();
-  }, [id]);
+  }, [id, reloadCounter]);
 
   if (loading) {
     return (
@@ -79,13 +82,28 @@ export default function DayDetail() {
       {/* Meals Grid (3 Cards: Breakfast, Lunch, Dinner) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="h-full">
-          <MealDetailCard type="breakfast" meal={meals.breakfast} />
+          <MealDetailCard 
+            type="breakfast" 
+            meal={meals.breakfast} 
+            dayId={id} 
+            onComplete={() => setReloadCounter(prev => prev + 1)} 
+          />
         </div>
         <div className="h-full">
-          <MealDetailCard type="lunch" meal={meals.lunch} />
+          <MealDetailCard 
+            type="lunch" 
+            meal={meals.lunch} 
+            dayId={id} 
+            onComplete={() => setReloadCounter(prev => prev + 1)} 
+          />
         </div>
         <div className="h-full">
-          <MealDetailCard type="dinner" meal={meals.dinner} />
+          <MealDetailCard 
+            type="dinner" 
+            meal={meals.dinner} 
+            dayId={id} 
+            onComplete={() => setReloadCounter(prev => prev + 1)} 
+          />
         </div>
       </div>
 

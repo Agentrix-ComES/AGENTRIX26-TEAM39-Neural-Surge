@@ -2,6 +2,7 @@
 import os
 import csv
 import sys
+import json
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
@@ -81,6 +82,10 @@ def init_qdrant() -> int:
                 summary = row.get("recipe_summary", "")
                 tags = [t.strip() for t in row.get("tags", "").split(";")] if row.get("tags") else []
                 
+                # Consumption model fields
+                ingredients_json = json.loads(row.get("ingredients_json", "{}"))
+                portion_per_person = row.get("portion_per_person", "true").lower() == "true"
+                
                 # Create document text representation to embed
                 text_content = f"Recipe: {name}. Ingredients: {', '.join(ingredients)}. Meal Type: {meal_type}. Summary: {summary}. Tags: {', '.join(tags)}."
                 vector = get_embedding(text_content)
@@ -91,7 +96,9 @@ def init_qdrant() -> int:
                     "meal_type": meal_type,
                     "nutrition_score": nutrition_score,
                     "recipe_summary": summary,
-                    "tags": tags
+                    "tags": tags,
+                    "ingredients_json": ingredients_json,
+                    "portion_per_person": portion_per_person
                 }
                 
                 points.append(
@@ -154,6 +161,9 @@ def fallback_keyword_search(query: str, limit: int = 20):
             summary = row.get("recipe_summary", "")
             tags = [t.strip() for t in row.get("tags", "").split(";")] if row.get("tags") else []
             
+            ingredients_json = json.loads(row.get("ingredients_json", "{}"))
+            portion_per_person = row.get("portion_per_person", "true").lower() == "true"
+            
             match_count = 0
             text_space = f"{name} {' '.join(ingredients)} {meal_type} {summary} {' '.join(tags)}".lower()
             for term in terms:
@@ -167,6 +177,8 @@ def fallback_keyword_search(query: str, limit: int = 20):
                 "nutrition_score": nutrition_score,
                 "recipe_summary": summary,
                 "tags": tags,
+                "ingredients_json": ingredients_json,
+                "portion_per_person": portion_per_person,
                 "match_count": match_count
             })
             

@@ -43,13 +43,13 @@ workflow.add_edge("budget", "reflection")
 # Define Routing Function based on Reflection Loop status
 def route_reflection(state: AgentState):
     """
-    Routes from reflection agent back to meal planner on FAIL (up to MAX_RETRIES=2),
+    Routes from reflection agent back to meal planner on FAIL (up to MAX_RETRIES=1),
     otherwise proceeds to the reporting agent.
     """
     # Note: retry_count is incremented inside reflection_agent on FAIL
     ref_res = state.get("reflection_result", {})
     status = ref_res.get("status") if isinstance(ref_res, dict) else ref_res
-    if status == "FAIL" and state.get("retry_count", 0) <= 2:
+    if status == "FAIL" and state.get("retry_count", 0) <= 1:
         print(f"--- Reflection check FAILED. Triggering self-correction loop. Retry iteration: {state.get('retry_count')} ---")
         return "meal_planner"
     return "reporting"

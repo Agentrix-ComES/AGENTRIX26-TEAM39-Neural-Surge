@@ -39,7 +39,7 @@ def coordinator_agent(state: AgentState):
     meal_history = list(set(meal_history))
     
     objective = (
-        f"Optimize 7-day meal plan for a family of {family_size} within LKR {budget}. "
+        f"Optimize 3-day meal plan for a family of {family_size} within LKR {budget}. "
         f"Prioritize perishables, and avoid repeating meals: {', '.join(meal_history)}."
     )
     

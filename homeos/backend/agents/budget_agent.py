@@ -96,7 +96,7 @@ def budget_agent(state: AgentState):
     trace_entry = {
         "agent": "Budget Agent",
         "input": f"Allowed budget limit: LKR {state.get('budget')} | Weekly Plan days: {len(weekly_plan)}",
-        "decision": "Calculated costs for all 7 days programmatically from prices.csv.",
+        "decision": "Calculated costs for all 3 days programmatically from prices.csv.",
         "output": f"Total Cost: LKR {int(total_cost)} | Shopping list size: {len(shopping_list)}"
     }
 
