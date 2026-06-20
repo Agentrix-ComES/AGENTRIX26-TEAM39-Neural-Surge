@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import DayDetail from './pages/DayDetail';
 import AgentTrace from './pages/AgentTrace';
+import Receipts from './pages/Receipts';
 
 export default function App() {
   const [currentPlan, setCurrentPlan] = useState(null);
@@ -37,6 +38,7 @@ export default function App() {
               />
               <Route path="/day/:id" element={<DayDetail />} />
               <Route path="/trace" element={<AgentTrace />} />
+              <Route path="/receipts" element={<Receipts />} />
             </Routes>
           </div>
         </main>

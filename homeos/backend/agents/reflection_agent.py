@@ -6,7 +6,7 @@ from graph.state import AgentState
 
 # Add parent path to allow imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from llm import call_gemini
+from llm import generate_text
 
 def reflection_agent(state: AgentState):
     """
@@ -33,7 +33,7 @@ def reflection_agent(state: AgentState):
     }, indent=2)
 
     # Call Gemini Flash with JSON mode enabled
-    decision = call_gemini(system_prompt, user_content, temperature=0.1, json_mode=True)
+    decision = generate_text(system_prompt, user_content, temperature=0.1, json_mode=True)
     
     # Strip markdown ticks if returned
     cleaned_decision = decision
@@ -56,7 +56,7 @@ def reflection_agent(state: AgentState):
         urgent_ok = True
         if urgent_foods:
             used_early = False
-            for d in ["day_1", "day_2", "day_3"]:
+            for d in ["day_1", "day_2"]:
                 day_meals = weekly_plan.get(d, {})
                 for meal in day_meals.values():
                     ingredients = [i.lower() for i in meal.get("ingredients_used", [])]
@@ -70,8 +70,8 @@ def reflection_agent(state: AgentState):
         reason = "Python Fallback: plan passes all budget and perishable constraints." if status == "PASS" else "Python Fallback: plan failed budget or perishable timing."
         reflection_result = {"status": status, "score": score, "reason": reason}
 
-    # Safety rule: force PASS if max retries (2) is reached
-    if retry_count >= 2:
+    # Safety rule: force PASS if max retries (1) is reached
+    if retry_count >= 1:
         reflection_result["status"] = "PASS"
         reflection_result["reason"] = f"Forced PASS (retry limit {retry_count} reached)."
 

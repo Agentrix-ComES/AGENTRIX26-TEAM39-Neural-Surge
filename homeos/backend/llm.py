@@ -1,34 +1,44 @@
 # llm.py
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
 
-# Setup API Key configuration
-api_key = os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
+# Load environment variables
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(dotenv_path=dotenv_path)
 
-def call_gemini(system_prompt: str, user_content: str, temperature: float = 0.2, json_mode: bool = False) -> str:
+class GeminiClient:
+    def __init__(self):
+        # Initialize the official SDK client.
+        # Fall back to a dummy key if none is set to allow startup/offline runs without ValueError
+        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "DUMMY_KEY_TO_ALLOW_STARTUP"
+        self.client = genai.Client(api_key=self.api_key)
+
+# Global singleton or cache
+_client_instance = None
+
+def get_gemini_client():
+    global _client_instance
+    if _client_instance is None:
+        _client_instance = GeminiClient()
+    return _client_instance
+
+def generate_text(system_prompt: str, user_content: str, temperature: float = 0.2, json_mode: bool = False) -> str:
     """
     Unified client helper invoking gemini-2.5-flash with system instructions.
     Optionally configures Q&A for strict JSON responses.
     """
-    model_name = "gemini-2.5-flash"
+    client = get_gemini_client()
     try:
-        # Standard configuration
-        generation_config = genai.types.GenerationConfig(temperature=temperature)
-        if json_mode:
-            generation_config = genai.types.GenerationConfig(
+        response = client.client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_content,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
                 temperature=temperature,
-                response_mime_type="application/json"
+                response_mime_type="application/json" if json_mode else None
             )
-            
-        model = genai.GenerativeModel(
-            model_name=model_name,
-            system_instruction=system_prompt
-        )
-        response = model.generate_content(
-            user_content,
-            generation_config=generation_config
         )
         return response.text.strip()
     except Exception as e:
@@ -37,19 +47,35 @@ def call_gemini(system_prompt: str, user_content: str, temperature: float = 0.2,
             return '{"status": "PASS", "score": 90, "reason": "Fallback PASS status issued due to Gemini API client lookup error."}'
         return f"[Fallback Gemini output due to API error: {e}]"
 
-def get_gemini_embedding(text: str, is_query: bool = False) -> list:
+_embedding_error_logged = False
+
+def get_embedding(text: str) -> list:
     """
-    Generates 768-dimension embeddings using text-embedding-004.
+    Generates 768-dimension embeddings using gemini-embedding-2.
     """
+    global _embedding_error_logged
+    client = get_gemini_client()
     try:
-        task_type = "retrieval_query" if is_query else "retrieval_document"
-        result = genai.embed_content(
-            model="models/text-embedding-004",
-            content=text,
-            task_type=task_type
+        res = client.client.models.embed_content(
+            model="gemini-embedding-2",
+            contents=text,
+            config=types.EmbedContentConfig(output_dimensionality=768)
         )
-        return result['embedding']
+        return res.embeddings[0].values
     except Exception as e:
-        print(f"Error generating Gemini Embeddings: {e}")
-        # Fallback to empty 768-dimensional float list in case of errors
-        return [0.0] * 768
+        if not _embedding_error_logged:
+            print(f"Warning: Gemini Embedding generation failed (details: {e}). Using offline zero-vector fallback.")
+            _embedding_error_logged = True
+        try:
+            res = client.client.models.embed_content(
+                model="gemini-embedding-001",
+                contents=text,
+                config=types.EmbedContentConfig(output_dimensionality=768)
+            )
+            return res.embeddings[0].values
+        except Exception:
+            return [0.0] * 768
+
+# For backward compatibility
+call_gemini = generate_text
+get_gemini_embedding = lambda text, is_query=False: get_embedding(text)
