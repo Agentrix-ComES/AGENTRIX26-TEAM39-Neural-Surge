@@ -509,8 +509,6 @@ Add:
 
 ```env
 GOOGLE_API_KEY=your_key_here
-QDRANT_URL=your_qdrant_url
-QDRANT_API_KEY=your_qdrant_key
 GROQ_API_KEY=your_groq_key
 ```
 
