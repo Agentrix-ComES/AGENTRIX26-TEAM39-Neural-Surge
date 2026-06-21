@@ -37,7 +37,6 @@ def init_qdrant() -> int:
         json_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'recipes_with_embeddings.json')
         if os.path.exists(json_file):
             try:
-                import json
                 with open(json_file, 'r', encoding='utf-8') as f:
                     recipes_data = json.load(f)
                     

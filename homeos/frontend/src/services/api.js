@@ -85,6 +85,16 @@ export async function getPantry() {
   return response.json();
 }
 
+export async function getReceiptsInventory() {
+  const response = await fetch('/api/receipts/inventory');
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch receipts inventory.');
+  }
+
+  return response.json();
+}
+
 export async function getInventory() {
   const response = await fetch('/api/inventory');
 
