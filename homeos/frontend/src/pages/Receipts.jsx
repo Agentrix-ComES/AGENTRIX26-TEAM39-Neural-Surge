@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ReceiptInput from '../components/ReceiptInput';
-import { getInventory } from '../services/api';
+import { getReceiptsInventory } from '../services/api';
 
 export default function Receipts() {
   const [pantryItems, setPantryItems] = useState([]);
 
   const fetchPantry = async () => {
     try {
-      const data = await getInventory();
+      const data = await getReceiptsInventory();
       setPantryItems(data);
     } catch (err) {
       console.error("Failed to load pantry:", err);
