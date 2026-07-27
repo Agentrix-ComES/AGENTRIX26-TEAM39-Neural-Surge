@@ -1,11 +1,3 @@
-.DS_Store
-<<<<<<< HEAD
-=======
-*.md
-!README.md
-homeos.zip
-
-
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
@@ -88,4 +80,3 @@ mobile/.expo/
 
 # Expo
 mobile/.expo/
->>>>>>> a7e4300 (chore: update gitignore for local development files)
